@@ -5,7 +5,9 @@
   {mod, {xposter_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    discordant,
+    mnesia
    ]},
   {env,[]},
   {modules, []},
