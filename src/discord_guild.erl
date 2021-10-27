@@ -2,12 +2,12 @@
 -include_lib("kernel/include/logger.hrl").
 
 -export([install/0]).
--export([add_guild/2, add_channel/2, remove_guild/1, remove_channel/2,
+-export([add_guild/2, add_channel/3, remove_guild/1, remove_channel/2,
          get_guilds/0, get_guild/1]).
 
 -record(discord_guild, {id :: binary(),
                         name :: binary(),
-                        channels=[] :: [binary()]}).
+                        channels=[] :: [{binary(), binary()}]}).
 
 install() ->
     case lists:member(discord_guild, mnesia:system_info(tables)) of
@@ -32,16 +32,18 @@ add_guild(Id, Name) ->
         end,
     mnesia:activity(transaction, F).
 
-add_channel(Guild, Channel) ->
+add_channel(Guild, Channel, Type) ->
     F = fun() ->
                 case mnesia:read({discord_guild, Guild}) of
                     [] -> {error, <<"no such guild">>};
                     [_,_|_] -> {error, <<"multiple matching guilds">>};
                     [G=#discord_guild{channels=C}] ->
-                        case lists:member(Channel, C) of
+                        case lists:keymember(Channel, 1, C) of
                             true -> ok;
                             false ->
-                                Entry = G#discord_guild{channels=[Channel|C]},
+                                Entry = G#discord_guild{
+                                          channels=[{Channel, Type}|C]
+                                         },
                                 mnesia:write(Entry)
                         end
                 end
@@ -58,7 +60,7 @@ remove_channel(Guild, Channel) ->
                     [] -> {error, <<"no such guild">>};
                     [_,_|_] -> {error, <<"multiple matching guilds">>};
                     [G=#discord_guild{channels=C}] ->
-                        NC = lists:delete(Channel, C),
+                        NC = lists:keydelete(Channel, 1, C),
                         Entry = G#discord_guild{channels=NC},
                         mnesia:write(Entry)
                 end
