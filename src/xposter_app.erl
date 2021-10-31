@@ -17,8 +17,14 @@ start(_StartType, _StartArgs) ->
     discord_guild:install(),
     discordant:connect(Token),
     Msgs = #{
-      <<"start">> => #{call => {xposter, add_channel, []}},
-      <<"stop">> => #{call => {xposter, remove_channel, []}}
+      <<"start">> => #{call => {xposter, add_channel, []},
+                       args => ["type"],
+                       help => "add the channel to the network TYPE"
+                      },
+      <<"stop">> => #{call => {xposter, remove_channel, []},
+                      args => [],
+                      help => "remove the current channel from its network"
+                     }
      },
     discordant:set_routes(Msgs, []),
     Hooks = #{
